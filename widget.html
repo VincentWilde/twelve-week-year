@@ -28,7 +28,28 @@ a{color:var(--accent)}
   <div class="card">
     <button id="copy">Copia script</button>
     <p id="status"></p>
-    <textarea id="code" readonly aria-label="Codice dello script">Caricamento…</textarea>
+    <textarea id="code" readonly aria-label="Codice dello script">// 12 Settimane — incolla questo in Scriptable una volta sola.
+// A ogni aggiornamento del widget scarica l&#x27;ultima versione dal sito;
+// senza connessione usa l&#x27;ultima copia salvata.
+const URL = &quot;https://vincentwilde.github.io/twelve-week-year/scriptable/12-settimane.js&quot;;
+const fm = FileManager.local();
+const cache = fm.joinPath(fm.documentsDirectory(), &quot;12-settimane-cache.js&quot;);
+let code = null;
+try {
+  const r = new Request(URL + &quot;?v=&quot; + Date.now());
+  r.timeoutInterval = 10;
+  const t = await r.loadString();
+  if (r.response.statusCode === 200 &amp;&amp; t.includes(&quot;function cycle&quot;)) {
+    code = t;
+    fm.writeString(cache, t);
+  }
+} catch (e) {}
+if (!code &amp;&amp; fm.fileExists(cache)) code = fm.readString(cache);
+if (!code) throw new Error(&quot;Serve la connessione per il primo avvio.&quot;);
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+await new AsyncFunction(code)();
+</textarea>
+    <p><small>Va incollato una volta sola: gli aggiornamenti arrivano da soli.</small></p>
   </div>
   <div class="card">
     <ol>
@@ -40,16 +61,12 @@ a{color:var(--accent)}
       <li>Tocca il widget appena aggiunto → <b>Script</b> → <b>12 Settimane</b>. Tocca Fine.</li>
     </ol>
     <p><b>A tutta larghezza:</b> aggiungi <b>due</b> widget rettangolari affiancati. Tocca quello di sinistra e in <b>Parameter</b> scrivi <code>data</code>. In quello di destra scrivi <code>settimana</code>.</p>
-    <p><small>Formato in linea: tocca la data sopra l'ora e scegli Scriptable. Hai già lo script della versione precedente? Aprilo in Scriptable, seleziona tutto, cancella e incolla quello nuovo. Il widget si aggiorna da solo; iOS decide quando, di solito ogni 15–30 minuti.</small></p>
+    <p><small>Formato in linea: tocca la data sopra l'ora e scegli Scriptable. Hai già lo script di prima? Aprilo in Scriptable, seleziona tutto, cancella e incolla questo. Il widget si aggiorna da solo; iOS decide quando, di solito ogni 15–30 minuti.</small></p>
   </div>
   <p><a href="./">← Torna al calendario</a></p>
 </main>
 <script>
 const code = document.getElementById("code"), status = document.getElementById("status");
-fetch("scriptable/12-settimane.js", { cache: "no-store" })
-  .then(r => r.ok ? r.text() : Promise.reject())
-  .then(t => { code.value = t; })
-  .catch(() => { code.value = ""; status.textContent = "Script non caricato. Ricarica la pagina."; });
 document.getElementById("copy").addEventListener("click", async () => {
   try { await navigator.clipboard.writeText(code.value); status.textContent = "Copiato. Ora incollalo in Scriptable."; }
   catch { code.focus(); code.select(); status.textContent = "Testo selezionato: tocca Copia."; }
