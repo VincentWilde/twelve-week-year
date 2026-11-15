@@ -110,7 +110,7 @@ function weekLine(c) {
   return c.rest ? "Settimana 13 · revisione" : "Settimana " + c.week + " di 12 · giorno " + c.dow;
 }
 
-function build(family, c) {
+function build(family, c, param) {
   const w = new ListWidget();
   w.refreshAfterDate = new Date(Date.now() + 30 * 60 * 1000);
   const big = c.rest ? "Revisione" : eqLong(c);
@@ -128,7 +128,7 @@ function build(family, c) {
   }
 
   if (family === "accessoryRectangular") {
-    const part = (args.widgetParameter || "").trim().toLowerCase();
+    const part = (param || "").trim().toLowerCase();
 
     // Parametro "data": solo la data equivalente, più grande possibile.
     if (part === "data") {
@@ -203,19 +203,23 @@ function build(family, c) {
 const c = cycle(new Date());
 
 if (config.runsInWidget || config.runsInAccessoryWidget) {
-  Script.setWidget(build(config.widgetFamily, c));
+  Script.setWidget(build(config.widgetFamily, c, args.widgetParameter));
 } else {
   // Aperto nell'app: mostra l'anteprima dei formati per la schermata di blocco.
   const choice = new Alert();
   choice.title = (c.rest ? "Revisione" : eqLong(c)) + " — " + weekLine(c);
   choice.message = "Anteprima del widget";
-  choice.addAction("Rettangolare");
+  choice.addAction("Sinistra · data");
+  choice.addAction("Destra · settimana");
+  choice.addAction("Rettangolare singolo");
   choice.addAction("Circolare");
   choice.addAction("In linea");
   choice.addCancelAction("Chiudi");
   const i = await choice.presentSheet();
-  if (i === 0) await build("accessoryRectangular", c).presentAccessoryRectangular();
-  if (i === 1) await build("accessoryCircular", c).presentAccessoryCircular();
-  if (i === 2) await build("accessoryInline", c).presentAccessoryInline();
+  if (i === 0) await build("accessoryRectangular", c, "data").presentAccessoryRectangular();
+  if (i === 1) await build("accessoryRectangular", c, "settimana").presentAccessoryRectangular();
+  if (i === 2) await build("accessoryRectangular", c).presentAccessoryRectangular();
+  if (i === 3) await build("accessoryCircular", c).presentAccessoryCircular();
+  if (i === 4) await build("accessoryInline", c).presentAccessoryInline();
 }
 Script.complete();
