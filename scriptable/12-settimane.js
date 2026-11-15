@@ -3,9 +3,9 @@
 // esecuzione, settimana 13 di revisione. Ogni settimana vale un mese.
 //
 // Formati supportati:
-//  - in linea (sopra l'orologio):  "S7/12 · ≈15 lug"
-//  - rettangolare:                  settimana, data equivalente, barra 12 settimane
-//  - circolare:                     numero della settimana con anello di avanzamento
+//  - in linea (sopra l'orologio):  "18 luglio · S7/12"
+//  - rettangolare:                  data equivalente in grande, settimana, striscia 12 settimane
+//  - circolare:                     giorno e mese equivalenti con anello di avanzamento
 
 const MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
 const DAY = 86400000;
@@ -35,40 +35,40 @@ function cycle(now) {
   };
 }
 
-function eqShort(c) { return c.eq.d + " " + MESI[c.eq.m].slice(0, 3); }
 function eqLong(c) { return c.eq.d + " " + MESI[c.eq.m]; }
 
-// Barra: 12 segmenti + un segmento corto per la settimana 13.
+// Striscia come nella pagina: 12 tacche + un punto per la settimana 13.
 function barImage(c, w, h) {
   const ctx = new DrawContext();
   ctx.size = new Size(w, h);
   ctx.opaque = false;
   ctx.respectScreenScale = true;
   const gap = 3;
-  const unit = (w - gap * 12) / 12.5;
-  let x = 0;
-  for (let i = 1; i <= 13; i++) {
-    const sw = i === 13 ? unit * 0.5 : unit;
-    const bg = new Path();
-    bg.addRoundedRect(new Rect(x, 0, sw, h), h / 2, h / 2);
-    ctx.addPath(bg);
-    ctx.setFillColor(new Color("#ffffff", i < c.week ? 1 : 0.3));
+  const unit = (w - h - gap * 12) / 12;
+  const pill = (x, sw, alpha) => {
+    const p = new Path();
+    p.addRoundedRect(new Rect(x, 0, sw, h), h / 2, h / 2);
+    ctx.addPath(p);
+    ctx.setFillColor(new Color("#ffffff", alpha));
     ctx.fillPath();
-    if (i === c.week) {
-      const fg = new Path();
-      fg.addRoundedRect(new Rect(x, 0, Math.max(h, sw * Math.min(1, c.weekFrac)), h), h / 2, h / 2);
-      ctx.addPath(fg);
-      ctx.setFillColor(Color.white());
-      ctx.fillPath();
-    }
-    x += sw + gap;
+  };
+  let x = 0;
+  for (let i = 1; i <= 12; i++) {
+    pill(x, unit, i < c.week ? 1 : 0.3);
+    if (i === c.week) pill(x, Math.max(h, unit * Math.min(1, c.weekFrac)), 1);
+    x += unit + gap;
   }
+  const dot = new Path();
+  dot.addEllipse(new Rect(x, 0, h, h));
+  ctx.addPath(dot);
+  ctx.setFillColor(new Color("#ffffff", c.rest ? 1 : 0.3));
+  ctx.fillPath();
   return ctx.getImage();
 }
 
-// Anello: avanzamento nelle 12 settimane, numero della settimana al centro.
+// Circolare: giorno e mese equivalenti al centro, anello = avanzamento del ciclo.
 function ringImage(c) {
-  const S = 120, lw = 10, r = S / 2 - lw / 2 - 1, cx = S / 2, cy = S / 2;
+  const S = 120, lw = 9, r = S / 2 - lw / 2 - 1, cx = S / 2, cy = S / 2;
   const ctx = new DrawContext();
   ctx.size = new Size(S, S);
   ctx.opaque = false;
@@ -97,19 +97,24 @@ function ringImage(c) {
 
   ctx.setTextColor(Color.white());
   ctx.setTextAlignedCenter();
-  ctx.setFont(Font.heavyRoundedSystemFont(46));
-  ctx.drawTextInRect(String(c.week), new Rect(0, 26, S, 54));
-  ctx.setFont(Font.semiboldRoundedSystemFont(17));
-  ctx.drawTextInRect(c.rest ? "pausa" : "di 12", new Rect(0, 78, S, 22));
+  ctx.setFont(Font.heavyRoundedSystemFont(44));
+  ctx.drawTextInRect(c.rest ? "13" : String(c.eq.d), new Rect(0, 26, S, 52));
+  ctx.setFont(Font.semiboldRoundedSystemFont(18));
+  ctx.drawTextInRect(c.rest ? "rev." : MESI[c.eq.m].slice(0, 3), new Rect(0, 76, S, 24));
   return ctx.getImage();
+}
+
+function weekLine(c) {
+  return c.rest ? "Settimana 13 · revisione" : "Settimana " + c.week + " di 12 · giorno " + c.dow;
 }
 
 function build(family, c) {
   const w = new ListWidget();
   w.refreshAfterDate = new Date(Date.now() + 30 * 60 * 1000);
+  const big = c.rest ? "Revisione" : eqLong(c);
 
   if (family === "accessoryInline") {
-    w.addText(c.rest ? "S13 · revisione" : "S" + c.week + "/12 · ≈" + eqShort(c));
+    w.addText(c.rest ? "Revisione · S13" : eqLong(c) + " · S" + c.week + "/12");
     return w;
   }
 
@@ -121,33 +126,44 @@ function build(family, c) {
   }
 
   if (family === "accessoryRectangular") {
-    const t1 = w.addText(c.rest ? "SETTIMANA 13 · PAUSA" : "SETTIMANA " + c.week + "/12 · G" + c.dow);
-    t1.font = Font.semiboldRoundedSystemFont(12);
+    const t1 = w.addText(big);
+    t1.font = Font.heavyRoundedSystemFont(24);
     t1.lineLimit = 1;
-    t1.minimumScaleFactor = 0.7;
-    const t2 = w.addText(c.rest ? "Rivedi e pianifica" : "≈ " + eqLong(c));
-    t2.font = Font.boldRoundedSystemFont(18);
+    t1.minimumScaleFactor = 0.6;
+    t1.centerAlignText();
+    const t2 = w.addText(weekLine(c));
+    t2.font = Font.mediumRoundedSystemFont(12);
     t2.lineLimit = 1;
-    t2.minimumScaleFactor = 0.6;
-    w.addSpacer(4);
-    w.addImage(barImage(c, 150, 6));
+    t2.minimumScaleFactor = 0.7;
+    t2.centerAlignText();
+    w.addSpacer(5);
+    const bar = w.addImage(barImage(c, 150, 6));
+    bar.centerAlignImage();
     return w;
   }
 
-  // Widget della schermata Home (piccolo/medio).
-  w.backgroundColor = new Color("#171a21");
-  const l = w.addText("Q" + (c.q + 1) + " " + c.y);
-  l.font = Font.semiboldRoundedSystemFont(12);
+  // Widget della schermata Home: stessi colori della pagina (tema scuro).
+  w.backgroundColor = new Color("#0d0f14");
+  const l = w.addText("ANNO DI 12 SETTIMANE");
+  l.font = Font.semiboldSystemFont(9);
   l.textColor = new Color("#8d93a3");
-  const n = w.addText(c.rest ? "Settimana 13" : "Settimana " + c.week);
-  n.font = Font.heavyRoundedSystemFont(22);
-  n.textColor = Color.white();
+  l.centerAlignText();
+  w.addSpacer(4);
+  const e = w.addText(big);
+  e.font = Font.heavyRoundedSystemFont(26);
+  e.textColor = new Color(c.rest ? "#e0b25e" : "#7c98ff");
+  e.lineLimit = 1;
+  e.minimumScaleFactor = 0.5;
+  e.centerAlignText();
+  const n = w.addText(weekLine(c));
+  n.font = Font.mediumRoundedSystemFont(11);
+  n.textColor = new Color("#eef0f5");
+  n.lineLimit = 1;
   n.minimumScaleFactor = 0.7;
-  const e = w.addText(c.rest ? "Revisione e pausa" : "≈ " + eqLong(c));
-  e.font = Font.boldRoundedSystemFont(16);
-  e.textColor = new Color("#7c98ff");
-  w.addSpacer();
-  w.addImage(barImage(c, 130, 6));
+  n.centerAlignText();
+  w.addSpacer(10);
+  const bar = w.addImage(barImage(c, 130, 6));
+  bar.centerAlignImage();
   return w;
 }
 
@@ -158,7 +174,7 @@ if (config.runsInWidget || config.runsInAccessoryWidget) {
 } else {
   // Aperto nell'app: mostra l'anteprima dei formati per la schermata di blocco.
   const choice = new Alert();
-  choice.title = c.rest ? "Settimana 13 · pausa" : "Settimana " + c.week + " di 12 · ≈ " + eqLong(c);
+  choice.title = (c.rest ? "Revisione" : eqLong(c)) + " — " + weekLine(c);
   choice.message = "Anteprima del widget";
   choice.addAction("Rettangolare");
   choice.addAction("Circolare");
