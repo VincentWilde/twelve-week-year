@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="12 Settimane">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
+<title>Anno di 12 Settimane</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: una colonna stile schermata di blocco — oggi in alto, poi l'orologio del ciclo, poi la griglia delle 13 settimane */
+:root {
+  --bg: #f3f4f7;
+  --surface: #ffffff;
+  --fg: #16181d;
+  --muted: #6b7080;
+  --line: #dfe2ea;
+  --accent: #2f5bff;
+  --accent-soft: #e3e9ff;
+  --rest: #b07a1c;
+  --rest-soft: #f6ecd9;
+  --display: "Schibsted Grotesk", "SF Pro Display", system-ui, sans-serif;
+  --body: "Inter", -apple-system, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d0f14; --surface: #171a21; --fg: #eef0f5; --muted: #8d93a3; --line: #262a34;
+    --accent: #7c98ff; --accent-soft: #1d2440; --rest: #e0b25e; --rest-soft: #2e2618; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d0f14; --surface: #171a21; --fg: #eef0f5; --muted: #8d93a3; --line: #262a34;
+  --accent: #7c98ff; --accent-soft: #1d2440; --rest: #e0b25e; --rest-soft: #2e2618; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+.num { font-variant-numeric: tabular-nums; }
+.label { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* Oggi */
+.today { text-align: center; display: flex; flex-direction: column; gap: 2px; }
+.today .date { font-family: var(--display); font-weight: 700; font-size: 20px; color: var(--muted); }
+.today .date::first-letter { text-transform: uppercase; }
+.today .clock { font-family: var(--display); font-weight: 800; font-size: clamp(64px, 22vw, 104px); line-height: 1; letter-spacing: -.02em; }
+
+/* Orologio del ciclo */
+.cycle { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 22px 20px; display: flex; flex-direction: column; gap: 16px; }
+.cycle-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.big { white-space: nowrap; font-family: var(--display); font-weight: 800; font-size: clamp(32px, 10.5vw, 56px); line-height: 1; letter-spacing: -.02em; }
+.big small { font-size: .45em; color: var(--muted); font-weight: 700; letter-spacing: 0; }
+.sub { font-size: 17px; font-weight: 500; }
+.equiv { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--accent-soft); }
+.equiv b { font-family: var(--display); font-size: 22px; color: var(--accent); }
+.equiv span { color: var(--muted); font-size: 13px; line-height: 1.35; }
+.cycle.is-rest .equiv { background: var(--rest-soft); }
+.cycle.is-rest .equiv b { color: var(--rest); }
+
+.bar { display: grid; grid-template-columns: repeat(12, 1fr) .55fr; gap: 4px; }
+.bar i { height: 10px; border-radius: 3px; background: var(--line); position: relative; overflow: hidden; }
+.bar i.done { background: var(--accent); }
+.bar i.now::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--p, 0%); background: var(--accent); }
+.bar i.rest { background: var(--rest-soft); }
+.bar i.rest.now::after { background: var(--rest); }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stats div { display: flex; flex-direction: column; gap: 2px; }
+.stats b { font-family: var(--display); font-size: 22px; }
+
+/* Griglia settimane */
+.weeks-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.weeks-head h2 { font-family: var(--display); font-size: 20px; margin: 0; }
+.nav { display: flex; gap: 6px; }
+button, .pick { font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, .pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.weeks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.wk { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+.wk .n { font-family: var(--display); font-weight: 800; font-size: 22px; text-align: center; }
+.wk .m { font-weight: 600; }
+.wk .r { color: var(--muted); font-size: 13px; }
+.wk .t { font-size: 12px; color: var(--muted); text-align: right; }
+.wk.past { opacity: .5; }
+.wk.cur { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wk.cur .n { color: var(--accent); }
+.wk.w13 { background: var(--rest-soft); border-color: transparent; }
+.wk.w13 .n { color: var(--rest); }
+.days { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.days span { text-align: center; padding: 6px 0; border-radius: 8px; font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+.days span b { font-size: 15px; color: var(--fg); font-weight: 600; }
+.days span.on { background: var(--accent); color: #fff; }
+.days span.on b { color: #fff; }
+.days span.gone { opacity: .45; }
+
+.foot { color: var(--muted); font-size: 13px; line-height: 1.5; text-align: center; }
+.pickrow { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="today">
+    <div class="date" id="todayDate">domenica 15 novembre</div>
+    <div class="clock num" id="clock">01:04</div>
+  </header>
+
+  <section class="cycle" id="cycle" aria-live="polite">
+    <div class="cycle-top">
+      <div class="big num" id="weekBig">Settimana 7 <small>di 12</small></div>
+      <div class="label" id="qLabel">Q4 2026</div>
+    </div>
+    <div class="sub" id="daySub">Giorno 4 della settimana · giorno 46 del ciclo</div>
+    <div class="equiv">
+      <b id="equivDate">14 luglio</b>
+      <span id="equivNote">nel tuo anno di 12 settimane.<br>1 settimana = 1 mese.</span>
+    </div>
+    <div class="bar" id="bar" aria-hidden="true"></div>
+    <div class="stats">
+      <div><span class="label">Trascorso</span><b class="num" id="stPct">54%</b></div>
+      <div><span class="label">Mancano</span><b class="num" id="stLeft">38 g</b></div>
+      <div><span class="label">Fine ciclo</span><b class="num" id="stEnd">23 dic</b></div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <div class="weeks-head">
+      <h2 id="gridTitle">Ottobre – Dicembre 2026</h2>
+      <div class="nav">
+        <button id="prev" aria-label="Trimestre precedente">‹</button>
+        <button id="now" aria-label="Torna a oggi">Oggi</button>
+        <button id="next" aria-label="Trimestre successivo">›</button>
+      </div>
+    </div>
+    <ol class="weeks" id="weeks"></ol>
+  </section>
+
+  <div class="pickrow">
+    <label for="pick" class="label">Vedi un altro giorno</label>
+    <input type="date" id="pick" class="pick">
+  </div>
+
+  <p class="foot"><a href="widget.html" style="color:var(--accent)">Widget per la schermata di blocco →</a></p>
+  <p class="foot">Cicli fissi sui trimestri: gen, apr, lug, ott. Settimane 1–12 di esecuzione, poi la settimana 13 per rivedere e pianificare. Ogni settimana vale un mese, ogni giorno circa 4 giorni e mezzo.</p>
+</div>
+
+<script>
+(() => {
+  const MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+  const MESI_C = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+  const GG = ["D","L","M","M","G","V","S"];
+  const DAY = 86400000;
+  const $ = id => document.getElementById(id);
+  const utc = (y, m, d) => Date.UTC(y, m, d);
+  const fmtShort = t => { const d = new Date(t); return d.getUTCDate() + " " + MESI[d.getUTCMonth()].slice(0, 3); };
+
+  // Tutto il calcolo è su date "pure" (UTC a mezzanotte) per evitare problemi di ora legale.
+  function cycleInfo(y, m, d) {
+    const q = Math.floor(m / 3);
+    const qs = utc(y, q * 3, 1), qe = utc(y, q * 3 + 3, 1); // qe esclusivo
+    const idx = Math.round((utc(y, m, d) - qs) / DAY);
+    const week = Math.min(13, Math.floor(idx / 7) + 1);
+    return { y, q, qs, qe, qLen: Math.round((qe - qs) / DAY), idx, week, dow: idx % 7 + 1 };
+  }
+
+  // Data equivalente in un anno di 365/366 giorni compresso in 84 giorni.
+  function equivalent(y, frac) {
+    const yLen = Math.round((utc(y + 1, 0, 1) - utc(y, 0, 1)) / DAY);
+    const t = utc(y, 0, 1) + Math.min(yLen - 1, Math.floor(frac * yLen)) * DAY;
+    const d = new Date(t);
+    return d.getUTCDate() + " " + MESI[d.getUTCMonth()];
+  }
+
+  let viewQ = null; // {y,q} trimestre mostrato in griglia
+  let selected = null; // data scelta col selettore (null = oggi)
+
+  function nowParts() {
+    const n = new Date();
+    return { y: n.getFullYear(), m: n.getMonth(), d: n.getDate(), secFrac: (n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds()) / 86400, n };
+  }
+
+  function renderToday(p) {
+    const s = p.n.toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" });
+    $("todayDate").textContent = s;
+    $("clock").textContent = p.n.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function renderCycle(y, m, d, secFrac, isToday) {
+    const c = cycleInfo(y, m, d);
+    const box = $("cycle");
+    const rest = c.week === 13;
+    box.classList.toggle("is-rest", rest);
+    $("qLabel").textContent = "Q" + (c.q + 1) + " " + y + (isToday ? "" : " · " + d + " " + MESI[m]);
+    if (rest) {
+      $("weekBig").innerHTML = "Settimana 13 <small>pausa</small>";
+      $("daySub").textContent = "Giorno " + (c.idx - 83) + " di " + (c.qLen - 84) + " · revisione del ciclo";
+      $("equivDate").textContent = "Capodanno";
+      $("equivNote").innerHTML = "il tuo anno è finito.<br>Rivedi i risultati e prepara il prossimo ciclo.";
+    } else {
+      $("weekBig").innerHTML = "Settimana " + c.week + " <small>di 12</small>";
+      $("daySub").textContent = "Giorno " + c.dow + " della settimana · giorno " + (c.idx + 1) + " di 84";
+      const frac = (c.idx + secFrac) / 84;
+      $("equivDate").textContent = equivalent(y, frac);
+      $("equivNote").innerHTML = "nel tuo anno di 12 settimane.<br>Settimana " + c.week + " = " + MESI[c.week - 1] + ".";
+    }
+    // barra
+    const bar = $("bar"); bar.innerHTML = "";
+    for (let w = 1; w <= 13; w++) {
+      const i = document.createElement("i");
+      if (w === 13) i.classList.add("rest");
+      if (w < c.week) i.classList.add("done");
+      if (w === c.week) {
+        i.classList.add("now");
+        const span = w === 13 ? c.qLen - 84 : 7;
+        const into = w === 13 ? c.idx - 84 : c.idx % 7;
+        i.style.setProperty("--p", Math.round(((into + secFrac) / span) * 100) + "%");
+      }
+      bar.appendChild(i);
+    }
+    const pct = rest ? 100 : Math.floor(((c.idx + secFrac) / 84) * 100);
+    $("stPct").textContent = pct + "%";
+    const left = rest ? 0 : 84 - c.idx;
+    $("stLeft").textContent = rest ? "—" : left + " g";
+    $("stEnd").textContent = fmtShort(c.qs + 83 * DAY);
+    return c;
+  }
+
+  function renderGrid(y, q, mark) {
+    const qs = utc(y, q * 3, 1), qe = utc(y, q * 3 + 3, 1);
+    const qLen = Math.round((qe - qs) / DAY);
+    $("gridTitle").textContent = MESI[q * 3][0].toUpperCase() + MESI[q * 3].slice(1) + " – " + MESI[q * 3 + 2] + " " + y;
+    const ol = $("weeks"); ol.innerHTML = "";
+    const markT = mark ? utc(mark.y, mark.m, mark.d) : null;
+    for (let w = 1; w <= 13; w++) {
+      const s = qs + (w - 1) * 7 * DAY;
+      const e = w === 13 ? qe - DAY : s + 6 * DAY;
+      const li = document.createElement("li");
+      li.className = "wk" + (w === 13 ? " w13" : "");
+      let state = "";
+      if (markT !== null) {
+        if (markT > e) { li.classList.add("past"); state = "fatta"; }
+        else if (markT >= s) { li.classList.add("cur"); state = "in corso"; }
+      }
+      li.innerHTML =
+        '<div class="n num">' + w + '</div>' +
+        '<div><div class="m">' + (w === 13 ? "Revisione e pausa" : MESI[w - 1][0].toUpperCase() + MESI[w - 1].slice(1)) + '</div>' +
+        '<div class="r num">' + fmtShort(s) + " – " + fmtShort(e) + '</div></div>' +
+        '<div class="t">' + state + '</div>';
+      if (li.classList.contains("cur")) {
+        const days = document.createElement("div"); days.className = "days";
+        const n = Math.round((e - s) / DAY) + 1;
+        for (let k = 0; k < n; k++) {
+          const t = s + k * DAY, dt = new Date(t);
+          const sp = document.createElement("span");
+          if (t === markT) sp.classList.add("on"); else if (t < markT) sp.classList.add("gone");
+          sp.innerHTML = GG[dt.getUTCDay()] + "<b class='num'>" + dt.getUTCDate() + "</b>";
+          days.appendChild(sp);
+        }
+        li.appendChild(days);
+      }
+      ol.appendChild(li);
+    }
+  }
+
+  function render() {
+    const p = nowParts();
+    renderToday(p);
+    const ref = selected || { y: p.y, m: p.m, d: p.d };
+    const isToday = !selected || (ref.y === p.y && ref.m === p.m && ref.d === p.d);
+    const c = renderCycle(ref.y, ref.m, ref.d, isToday ? p.secFrac : 0.5, isToday);
+    if (!viewQ) viewQ = { y: c.y, q: c.q };
+    renderGrid(viewQ.y, viewQ.q, ref);
+  }
+
+  function shiftQ(dir) {
+    let q = viewQ.q + dir, y = viewQ.y;
+    if (q < 0) { q = 3; y--; } if (q > 3) { q = 0; y++; }
+    viewQ = { y, q }; render();
+  }
+  $("prev").onclick = () => shiftQ(-1);
+  $("next").onclick = () => shiftQ(1);
+  $("now").onclick = () => { selected = null; viewQ = null; $("pick").value = ""; render(); };
+  $("pick").addEventListener("change", e => {
+    const v = e.target.value; if (!v) return;
+    const [y, m, d] = v.split("-").map(Number);
+    selected = { y, m: m - 1, d }; viewQ = null; render();
+  });
+
+  render();
+  // aggiorna ogni 20 s (orologio) e quando l'app torna in primo piano
+  setInterval(() => { if (!selected) render(); else renderToday(nowParts()); }, 20000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+})();
+</script>
+</body></html>
