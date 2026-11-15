@@ -5,6 +5,8 @@
 // Formati supportati:
 //  - in linea (sopra l'orologio):  "18 luglio · S7/12"
 //  - rettangolare:                  data equivalente in grande, settimana, striscia 12 settimane
+//      parametro "data"       → solo la data, grandissima (widget di sinistra)
+//      parametro "settimana"  → settimana + striscia (widget di destra)
 //  - circolare:                     giorno e mese equivalenti con anello di avanzamento
 
 const MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
@@ -54,14 +56,14 @@ function barImage(c, w, h) {
   };
   let x = 0;
   for (let i = 1; i <= 12; i++) {
-    pill(x, unit, i < c.week ? 1 : 0.3);
+    pill(x, unit, i < c.week ? 1 : 0.4);
     if (i === c.week) pill(x, Math.max(h, unit * Math.min(1, c.weekFrac)), 1);
     x += unit + gap;
   }
   const dot = new Path();
   dot.addEllipse(new Rect(x, 0, h, h));
   ctx.addPath(dot);
-  ctx.setFillColor(new Color("#ffffff", c.rest ? 1 : 0.3));
+  ctx.setFillColor(new Color("#ffffff", c.rest ? 1 : 0.4));
   ctx.fillPath();
   return ctx.getImage();
 }
@@ -126,10 +128,41 @@ function build(family, c) {
   }
 
   if (family === "accessoryRectangular") {
+    const part = (args.widgetParameter || "").trim().toLowerCase();
+
+    // Parametro "data": solo la data equivalente, più grande possibile.
+    if (part === "data") {
+      const l = w.addText("ANNO DI 12 SETTIMANE");
+      l.font = Font.semiboldSystemFont(10);
+      l.textOpacity = 0.7;
+      l.lineLimit = 1;
+      const t = w.addText(big);
+      t.font = Font.heavyRoundedSystemFont(40);
+      t.lineLimit = 1;
+      t.minimumScaleFactor = 0.4;
+      return w;
+    }
+
+    // Parametro "settimana": settimana, giorno e striscia a tutta larghezza.
+    if (part === "settimana") {
+      const t1 = w.addText(c.rest ? "Settimana 13" : "Settimana " + c.week + " di 12");
+      t1.font = Font.heavyRoundedSystemFont(19);
+      t1.lineLimit = 1;
+      t1.minimumScaleFactor = 0.6;
+      const t2 = w.addText(c.rest ? "Revisione · giorno " + c.dow : "Giorno " + c.dow + " · mancano " + (84 - c.idx) + " g");
+      t2.font = Font.mediumRoundedSystemFont(13);
+      t2.lineLimit = 1;
+      t2.minimumScaleFactor = 0.7;
+      w.addSpacer(6);
+      w.addImage(barImage(c, 156, 8));
+      return w;
+    }
+
+    // Senza parametro: tutto in un widget.
     const t1 = w.addText(big);
-    t1.font = Font.heavyRoundedSystemFont(24);
+    t1.font = Font.heavyRoundedSystemFont(28);
     t1.lineLimit = 1;
-    t1.minimumScaleFactor = 0.6;
+    t1.minimumScaleFactor = 0.5;
     t1.centerAlignText();
     const t2 = w.addText(weekLine(c));
     t2.font = Font.mediumRoundedSystemFont(12);
@@ -137,7 +170,7 @@ function build(family, c) {
     t2.minimumScaleFactor = 0.7;
     t2.centerAlignText();
     w.addSpacer(5);
-    const bar = w.addImage(barImage(c, 150, 6));
+    const bar = w.addImage(barImage(c, 156, 7));
     bar.centerAlignImage();
     return w;
   }
