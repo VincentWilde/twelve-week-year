@@ -5,8 +5,10 @@
 // Formati supportati:
 //  - in linea (sopra l'orologio):  "18 luglio · S7/12"
 //  - rettangolare:                  data equivalente in grande, settimana, striscia 12 settimane
-//      parametro "data"       → solo la data, grandissima (widget di sinistra)
-//      parametro "settimana"  → settimana + striscia (widget di destra)
+//      parametro "data"       → solo la data, grandissima
+//      parametro "settimana"  → settimana + striscia
+//  - circolare:  parametro "settimana" → numero settimana; "linee" → 12 tacche ad anello
+//  Riga intera (4 riquadri): [data rettangolare][settimana circolare][linee circolare]
 //  - circolare:                     giorno e mese equivalenti con anello di avanzamento
 
 const MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
@@ -106,6 +108,63 @@ function ringImage(c) {
   return ctx.getImage();
 }
 
+function newCanvas(S) {
+  const ctx = new DrawContext();
+  ctx.size = new Size(S, S);
+  ctx.opaque = false;
+  ctx.respectScreenScale = true;
+  return ctx;
+}
+
+// Arco da a0 a a1 (in giri, 0 = ore 12, senso orario).
+function strokeArc(ctx, cx, cy, r, a0, a1, lw, alpha) {
+  const steps = Math.max(2, Math.ceil((a1 - a0) * 160));
+  const pts = [];
+  for (let k = 0; k <= steps; k++) {
+    const a = -Math.PI / 2 + (a0 + (k / steps) * (a1 - a0)) * 2 * Math.PI;
+    pts.push(new Point(cx + r * Math.cos(a), cy + r * Math.sin(a)));
+  }
+  const p = new Path();
+  p.addLines(pts);
+  ctx.addPath(p);
+  ctx.setStrokeColor(new Color("#ffffff", alpha));
+  ctx.setLineWidth(lw);
+  ctx.strokePath();
+}
+
+// Circolare "settimana": numero della settimana grande.
+function weekCircle(c) {
+  const S = 120, ctx = newCanvas(S);
+  ctx.setTextColor(Color.white());
+  ctx.setTextAlignedCenter();
+  ctx.setFont(Font.semiboldRoundedSystemFont(15));
+  ctx.drawTextInRect(c.rest ? "SETT." : "SETT.", new Rect(0, 14, S, 20));
+  ctx.setFont(Font.heavyRoundedSystemFont(58));
+  ctx.drawTextInRect(String(c.week), new Rect(0, 30, S, 64));
+  ctx.setFont(Font.semiboldRoundedSystemFont(16));
+  ctx.drawTextInRect(c.rest ? "revisione" : "di 12", new Rect(0, 90, S, 22));
+  return ctx.getImage();
+}
+
+// Circolare "linee": le 12 settimane come 12 tacche su un anello, giorno al centro.
+function linesCircle(c) {
+  const S = 120, lw = 10, r = S / 2 - lw / 2 - 2, cx = S / 2, cy = S / 2, ctx = newCanvas(S);
+  const gap = 0.03;
+  for (let i = 1; i <= 12; i++) {
+    const a0 = (i - 1) / 12 + gap / 2, a1 = i / 12 - gap / 2;
+    const full = c.rest || i < c.week;
+    strokeArc(ctx, cx, cy, r, a0, a1, lw, full ? 1 : 0.35);
+    if (!c.rest && i === c.week) strokeArc(ctx, cx, cy, r, a0, a0 + (a1 - a0) * Math.max(0.08, Math.min(1, c.weekFrac)), lw, 1);
+  }
+  ctx.setTextColor(Color.white());
+  ctx.setTextAlignedCenter();
+  ctx.setFont(Font.semiboldRoundedSystemFont(14));
+  ctx.drawTextInRect("GIORNO", new Rect(0, 32, S, 18));
+  ctx.setFont(Font.heavyRoundedSystemFont(38));
+  ctx.drawTextInRect(String(c.dow), new Rect(0, 48, S, 44));
+  return ctx.getImage();
+}
+
 function weekLine(c) {
   return c.rest ? "Settimana 13 · revisione" : "Settimana " + c.week + " di 12 · giorno " + c.dow;
 }
@@ -121,8 +180,9 @@ function build(family, c, param) {
   }
 
   if (family === "accessoryCircular") {
-    w.addAccessoryWidgetBackground = true;
-    const img = w.addImage(ringImage(c));
+    const part = (param || "").trim().toLowerCase();
+    w.addAccessoryWidgetBackground = part !== "settimana" && part !== "linee";
+    const img = w.addImage(part === "settimana" ? weekCircle(c) : part === "linee" ? linesCircle(c) : ringImage(c));
     img.centerAlignImage();
     return w;
   }
@@ -132,14 +192,12 @@ function build(family, c, param) {
 
     // Parametro "data": solo la data equivalente, più grande possibile.
     if (part === "data") {
-      const l = w.addText("ANNO DI 12 SETTIMANE");
-      l.font = Font.semiboldSystemFont(10);
-      l.textOpacity = 0.7;
-      l.lineLimit = 1;
+      w.addSpacer();
       const t = w.addText(big);
-      t.font = Font.heavyRoundedSystemFont(40);
+      t.font = Font.heavyRoundedSystemFont(44);
       t.lineLimit = 1;
-      t.minimumScaleFactor = 0.4;
+      t.minimumScaleFactor = 0.3;
+      w.addSpacer();
       return w;
     }
 
@@ -209,17 +267,17 @@ if (config.runsInWidget || config.runsInAccessoryWidget) {
   const choice = new Alert();
   choice.title = (c.rest ? "Revisione" : eqLong(c)) + " — " + weekLine(c);
   choice.message = "Anteprima del widget";
-  choice.addAction("Sinistra · data");
-  choice.addAction("Destra · settimana");
+  choice.addAction("Data (rettangolare)");
+  choice.addAction("Settimana (circolare)");
+  choice.addAction("Linee (circolare)");
   choice.addAction("Rettangolare singolo");
-  choice.addAction("Circolare");
   choice.addAction("In linea");
   choice.addCancelAction("Chiudi");
   const i = await choice.presentSheet();
   if (i === 0) await build("accessoryRectangular", c, "data").presentAccessoryRectangular();
-  if (i === 1) await build("accessoryRectangular", c, "settimana").presentAccessoryRectangular();
-  if (i === 2) await build("accessoryRectangular", c).presentAccessoryRectangular();
-  if (i === 3) await build("accessoryCircular", c).presentAccessoryCircular();
+  if (i === 1) await build("accessoryCircular", c, "settimana").presentAccessoryCircular();
+  if (i === 2) await build("accessoryCircular", c, "linee").presentAccessoryCircular();
+  if (i === 3) await build("accessoryRectangular", c).presentAccessoryRectangular();
   if (i === 4) await build("accessoryInline", c).presentAccessoryInline();
 }
 Script.complete();
