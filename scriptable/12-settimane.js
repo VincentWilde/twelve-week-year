@@ -114,7 +114,8 @@ function weekLine(c) {
 function build(family, c, param) {
   const w = new ListWidget();
   w.refreshAfterDate = new Date(Date.now() + 30 * 60 * 1000);
-  const part = (param || globalThis.WIDGET_MODE || "").trim().toLowerCase();
+  // Il nome dello script (WIDGET_MODE) vince su un eventuale parametro rimasto nel widget.
+  const part = (globalThis.WIDGET_MODE || param || "").trim().toLowerCase();
 
   if (family === "accessoryInline") {
     w.addText(c.rest ? "Revisione · S13" : eqLong(c) + " · S" + c.week + "/12");
