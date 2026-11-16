@@ -130,6 +130,16 @@ function build(family, c, param) {
       img.centerAlignImage();
       return w;
     }
+    if (part === "percentuale") {
+      w.addSpacer();
+      const n = w.addText(Math.floor(c.totalFrac * 100) + "%");
+      n.font = Font.boldSystemFont(26);
+      n.lineLimit = 1;
+      n.minimumScaleFactor = 0.5;
+      n.centerAlignText();
+      w.addSpacer();
+      return w;
+    }
     w.addSpacer();
     const l = w.addText(c.rest ? "REV." : "SETT.");
     l.font = Font.semiboldSystemFont(10);
@@ -268,6 +278,7 @@ if (config.runsInWidget || config.runsInAccessoryWidget) {
   choice.addAction("Linee (circolare)");
   choice.addAction("Percentuale (rettangolare)");
   choice.addAction("Linea (rettangolare)");
+  choice.addAction("Percentuale (circolare)");
   choice.addAction("In linea");
   choice.addCancelAction("Chiudi");
   const i = await choice.presentSheet();
@@ -276,6 +287,7 @@ if (config.runsInWidget || config.runsInAccessoryWidget) {
   if (i === 2) await build("accessoryCircular", c, "linee").presentAccessoryCircular();
   if (i === 3) await build("accessoryRectangular", c, "percentuale").presentAccessoryRectangular();
   if (i === 4) await build("accessoryRectangular", c, "linea").presentAccessoryRectangular();
-  if (i === 5) await build("accessoryInline", c).presentAccessoryInline();
+  if (i === 5) await build("accessoryCircular", c, "percentuale").presentAccessoryCircular();
+  if (i === 6) await build("accessoryInline", c).presentAccessoryInline();
 }
 Script.complete();
