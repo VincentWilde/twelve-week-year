@@ -5,7 +5,7 @@
 // Riga intera della schermata di blocco (4 riquadri):
 //   [ data — rettangolare ][ settimana — circolare ][ linee — circolare, parametro "linee" ]
 // - rettangolare: data equivalente (nessun parametro)
-// - circolare:    numero della settimana; con parametro "linee" le 12 settimane ad anello
+// - circolare:    numero della settimana; script "12 Linee" (o parametro "linee") → 12 settimane ad anello
 // - in linea:     "19 luglio · S7/12"
 
 const MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
@@ -113,7 +113,7 @@ function weekLine(c) {
 function build(family, c, param) {
   const w = new ListWidget();
   w.refreshAfterDate = new Date(Date.now() + 30 * 60 * 1000);
-  const part = (param || "").trim().toLowerCase();
+  const part = (param || globalThis.WIDGET_MODE || "").trim().toLowerCase();
 
   if (family === "accessoryInline") {
     w.addText(c.rest ? "Revisione · S13" : eqLong(c) + " · S" + c.week + "/12");
@@ -160,25 +160,14 @@ function build(family, c, param) {
       l.textOpacity = 0.75;
       return w;
     }
-    const row = w.addStack();
-    row.layoutHorizontally();
-    row.centerAlignContent();
-    const day = row.addText(String(c.eq.d));
-    day.font = Font.boldSystemFont(56);
-    day.lineLimit = 1;
-    row.addSpacer(8);
-    const col = row.addStack();
-    col.layoutVertically();
-    const mon = col.addText(MESI[c.eq.m]);
-    mon.font = Font.boldSystemFont(24);
-    mon.lineLimit = 1;
-    mon.minimumScaleFactor = 0.6;
-    col.addSpacer(2);
-    const l = col.addText("ANNO DI 12 SETT.");
+    const t = w.addText(eqLong(c));
+    t.font = Font.boldSystemFont(40);
+    t.lineLimit = 1;
+    t.minimumScaleFactor = 0.4;
+    const l = w.addText("ANNO DI 12 SETTIMANE");
     l.font = Font.semiboldSystemFont(10);
     l.textOpacity = 0.75;
     l.lineLimit = 1;
-    row.addSpacer();
     return w;
   }
 

@@ -1,4 +1,5 @@
 // 12 Settimane — incolla questo in Scriptable una volta sola.
+globalThis.WIDGET_MODE = "";
 // A ogni aggiornamento del widget scarica l'ultima versione dal sito;
 // senza connessione usa l'ultima copia salvata.
 const URL = "https://vincentwilde.github.io/twelve-week-year/scriptable/12-settimane.js";
