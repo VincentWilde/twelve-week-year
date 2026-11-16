@@ -124,7 +124,7 @@ function build(family, c, param) {
   // Circolare: settimana (predefinito) oppure anello delle 12 settimane ("linee").
   if (family === "accessoryCircular") {
     w.addAccessoryWidgetBackground = true;
-    if (part === "linee") {
+    if (part === "linee" || part === "linea") {
       const img = w.addImage(linesImage(c));
       img.imageSize = new Size(68, 68);
       img.centerAlignImage();
@@ -207,7 +207,7 @@ function build(family, c, param) {
     }
 
     // "linea": la striscia delle 12 settimane + punto per la 13.
-    if (part === "linea") {
+    if (part === "linea" || part === "linee") {
       const l = w.addText(c.rest ? "SETTIMANA 13 · REVISIONE" : "SETTIMANA " + c.week + " DI 12");
       l.font = Font.semiboldSystemFont(12);
       l.textOpacity = 0.75;
