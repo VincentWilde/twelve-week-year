@@ -26,6 +26,59 @@ a{color:var(--accent)}
 <main>
   <h1>Widget per la schermata di blocco</h1>
   <div class="card">
+    <p>In Scriptable chiamalo <b>12 Giorno</b></p>
+    <button id="copy-codeg" data-t="codeg">Copia script 12 Giorno</button>
+    <textarea id="codeg" readonly aria-label="Codice dello script 12 Giorno">// 12 Giorno — incolla questo in Scriptable una volta sola.
+globalThis.WIDGET_MODE = &quot;giorno&quot;;
+// A ogni aggiornamento del widget scarica l&#x27;ultima versione dal sito;
+// senza connessione usa l&#x27;ultima copia salvata.
+const URL = &quot;https://vincentwilde.github.io/twelve-week-year/scriptable/12-settimane.js&quot;;
+const fm = FileManager.local();
+const cache = fm.joinPath(fm.documentsDirectory(), &quot;12-settimane-cache.js&quot;);
+let code = null;
+try {
+  const r = new Request(URL + &quot;?v=&quot; + Date.now());
+  r.timeoutInterval = 10;
+  const t = await r.loadString();
+  if (r.response.statusCode === 200 &amp;&amp; t.includes(&quot;function cycle&quot;)) {
+    code = t;
+    fm.writeString(cache, t);
+  }
+} catch (e) {}
+if (!code &amp;&amp; fm.fileExists(cache)) code = fm.readString(cache);
+if (!code) throw new Error(&quot;Serve la connessione per il primo avvio.&quot;);
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+await new AsyncFunction(code)();
+</textarea>
+  </div>
+  <div class="card">
+    <p>In Scriptable chiamalo <b>12 Mese</b></p>
+    <button id="copy-codem" data-t="codem">Copia script 12 Mese</button>
+    <textarea id="codem" readonly aria-label="Codice dello script 12 Mese">// 12 Mese — incolla questo in Scriptable una volta sola.
+globalThis.WIDGET_MODE = &quot;mese&quot;;
+// A ogni aggiornamento del widget scarica l&#x27;ultima versione dal sito;
+// senza connessione usa l&#x27;ultima copia salvata.
+const URL = &quot;https://vincentwilde.github.io/twelve-week-year/scriptable/12-settimane.js&quot;;
+const fm = FileManager.local();
+const cache = fm.joinPath(fm.documentsDirectory(), &quot;12-settimane-cache.js&quot;);
+let code = null;
+try {
+  const r = new Request(URL + &quot;?v=&quot; + Date.now());
+  r.timeoutInterval = 10;
+  const t = await r.loadString();
+  if (r.response.statusCode === 200 &amp;&amp; t.includes(&quot;function cycle&quot;)) {
+    code = t;
+    fm.writeString(cache, t);
+  }
+} catch (e) {}
+if (!code &amp;&amp; fm.fileExists(cache)) code = fm.readString(cache);
+if (!code) throw new Error(&quot;Serve la connessione per il primo avvio.&quot;);
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+await new AsyncFunction(code)();
+</textarea>
+  </div>
+  <p><small>Facoltativi, per i widget circolari:</small></p>
+  <div class="card">
     <p><b>Script 1</b> — in Scriptable chiamalo <b>12 Settimane</b></p>
     <button id="copy1" data-t="code1">Copia script 1</button>
     <textarea id="code1" readonly aria-label="Codice dello script 1">// 12 Settimane — incolla questo in Scriptable una volta sola.
@@ -81,10 +134,9 @@ await new AsyncFunction(code)();
   <div class="card">
     <ol>
       <li>Installa <b>Scriptable</b> dall'App Store (gratis).</li>
-      <li>Copia lo <b>script 1</b>, in Scriptable tocca <b>+</b>, incolla, chiamalo <b>12 Settimane</b>.</li>
-      <li>Copia lo <b>script 2</b>, nuovo script, incolla, chiamalo <b>12 Linee</b>.</li>
-      <li>Schermata di blocco → Personalizza → area widget → Scriptable: aggiungi <b>1 rettangolare + 2 circolari</b>.</li>
-      <li>Rettangolare e primo cerchio: Script <b>12 Settimane</b>. Secondo cerchio: Script <b>12 Linee</b>.</li>
+      <li>Copia lo script <b>12 Giorno</b>, in Scriptable tocca <b>+</b>, incolla e dagli quel nome. Fai lo stesso con <b>12 Mese</b>.</li>
+      <li>Schermata di blocco → Personalizza → area widget → Scriptable: aggiungi <b>2 rettangolari</b> affiancati.</li>
+      <li>Rettangolare di sinistra: Script <b>12 Giorno</b>. Rettangolare di destra: Script <b>12 Mese</b>.</li>
     </ol>
     <p><small>Formato in linea: tocca la data sopra l'ora e scegli Scriptable. Hai già lo script di prima? Aprilo in Scriptable, seleziona tutto, cancella e incolla questo. Il widget si aggiorna da solo; iOS decide quando, di solito ogni 15–30 minuti.</small></p>
   </div>

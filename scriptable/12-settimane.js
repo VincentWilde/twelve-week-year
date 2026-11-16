@@ -150,6 +150,39 @@ function build(family, c, param) {
 
   // Rettangolare: la data equivalente, grande.
   if (family === "accessoryRectangular") {
+    const left = 84 - c.idx;
+
+    // Metà sinistra ("giorno"): il numero del giorno enorme, allineato a destra
+    // così si unisce al widget "mese" accanto.
+    if (part === "giorno") {
+      const row = w.addStack();
+      row.layoutHorizontally();
+      row.addSpacer();
+      const n = row.addText(c.rest ? "13" : String(c.eq.d));
+      n.font = Font.boldSystemFont(68);
+      n.lineLimit = 1;
+      n.minimumScaleFactor = 0.5;
+      return w;
+    }
+
+    // Metà destra ("mese"): mese grande, settimana e giorni rimanenti sotto.
+    if (part === "mese") {
+      const m = w.addText(c.rest ? "Revisione" : MESI[c.eq.m]);
+      m.font = Font.boldSystemFont(30);
+      m.lineLimit = 1;
+      m.minimumScaleFactor = 0.5;
+      const s = w.addText(c.rest ? "Settimana 13 · G" + c.dow : "Sett. " + c.week + " · G" + c.dow);
+      s.font = Font.semiboldSystemFont(13);
+      s.lineLimit = 1;
+      s.minimumScaleFactor = 0.7;
+      const r = w.addText(c.rest ? "Nuovo ciclo tra " + (c.qLen - c.idx) + " g" : left + (left === 1 ? " giorno rimanente" : " giorni rimanenti"));
+      r.font = Font.mediumSystemFont(12);
+      r.textOpacity = 0.75;
+      r.lineLimit = 1;
+      r.minimumScaleFactor = 0.7;
+      return w;
+    }
+
     if (c.rest) {
       const t = w.addText("Revisione");
       t.font = Font.boldSystemFont(34);
