@@ -271,6 +271,7 @@ if (config.runsInWidget || config.runsInAccessoryWidget) {
   Script.setWidget(build(config.widgetFamily, c, args.widgetParameter));
 } else {
   // Aperto nell'app: anteprima dei widget.
+  globalThis.WIDGET_MODE = ""; // in anteprima comanda la scelta fatta qui
   const choice = new Alert();
   choice.title = (c.rest ? "Revisione" : eqLong(c)) + " — " + weekLine(c);
   choice.message = "Anteprima del widget";
