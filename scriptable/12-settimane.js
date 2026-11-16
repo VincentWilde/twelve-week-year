@@ -111,11 +111,20 @@ function weekLine(c) {
   return c.rest ? "Settimana 13 · revisione" : "Settimana " + c.week + " di 12 · giorno " + c.dow;
 }
 
+// Modalità ricavata dal nome dello script in Scriptable ("12 Linee", "12 Percentuale"…),
+// così non dipende da come il loader passa WIDGET_MODE.
+function modeFromName() {
+  let n = "";
+  try { n = Script.name().toLowerCase(); } catch (e) {}
+  for (const m of ["percentuale", "linee", "linea", "giorno", "mese"]) if (n.includes(m)) return m;
+  return "";
+}
+
 function build(family, c, param) {
   const w = new ListWidget();
   w.refreshAfterDate = new Date(Date.now() + 30 * 60 * 1000);
-  // Il nome dello script (WIDGET_MODE) vince su un eventuale parametro rimasto nel widget.
-  const part = (globalThis.WIDGET_MODE || param || "").trim().toLowerCase();
+  // Lo script scelto vince su un eventuale parametro rimasto nel widget.
+  const part = (globalThis.WIDGET_MODE || modeFromName() || param || "").trim().toLowerCase();
 
   if (family === "accessoryInline") {
     w.addText(c.rest ? "Revisione · S13" : eqLong(c) + " · S" + c.week + "/12");
@@ -272,6 +281,7 @@ if (config.runsInWidget || config.runsInAccessoryWidget) {
 } else {
   // Aperto nell'app: anteprima dei widget.
   globalThis.WIDGET_MODE = ""; // in anteprima comanda la scelta fatta qui
+  modeFromName = () => "";
   const choice = new Alert();
   choice.title = (c.rest ? "Revisione" : eqLong(c)) + " — " + weekLine(c);
   choice.message = "Anteprima del widget";
