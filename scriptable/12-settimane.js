@@ -4,7 +4,8 @@
 //
 // Riga intera della schermata di blocco (4 riquadri):
 //   [ data — rettangolare ][ settimana — circolare ][ linee — circolare, parametro "linee" ]
-// - rettangolare: data equivalente (nessun parametro)
+// - rettangolare: data equivalente (nessun parametro); "giorno", "mese",
+//                 "percentuale" (quota trascorsa), "linea" (striscia 12 settimane)
 // - circolare:    numero della settimana; script "12 Linee" (o parametro "linee") → 12 settimane ad anello
 // - in linea:     "19 luglio · S7/12"
 
@@ -183,6 +184,30 @@ function build(family, c, param) {
       return w;
     }
 
+    // "percentuale": quota del ciclo trascorsa, in grande.
+    if (part === "percentuale") {
+      const l = w.addText("TRASCORSO");
+      l.font = Font.semiboldSystemFont(11);
+      l.textOpacity = 0.75;
+      const n = w.addText(Math.floor(c.totalFrac * 100) + "%");
+      n.font = Font.boldSystemFont(52);
+      n.lineLimit = 1;
+      n.minimumScaleFactor = 0.5;
+      return w;
+    }
+
+    // "linea": la striscia delle 12 settimane + punto per la 13.
+    if (part === "linea") {
+      const l = w.addText(c.rest ? "SETTIMANA 13 · REVISIONE" : "SETTIMANA " + c.week + " DI 12");
+      l.font = Font.semiboldSystemFont(12);
+      l.textOpacity = 0.75;
+      l.lineLimit = 1;
+      l.minimumScaleFactor = 0.7;
+      w.addSpacer(8);
+      w.addImage(barImage(c, 150, 12));
+      return w;
+    }
+
     if (c.rest) {
       const t = w.addText("Revisione");
       t.font = Font.boldSystemFont(34);
@@ -241,12 +266,16 @@ if (config.runsInWidget || config.runsInAccessoryWidget) {
   choice.addAction("Data (rettangolare)");
   choice.addAction("Settimana (circolare)");
   choice.addAction("Linee (circolare)");
+  choice.addAction("Percentuale (rettangolare)");
+  choice.addAction("Linea (rettangolare)");
   choice.addAction("In linea");
   choice.addCancelAction("Chiudi");
   const i = await choice.presentSheet();
   if (i === 0) await build("accessoryRectangular", c).presentAccessoryRectangular();
   if (i === 1) await build("accessoryCircular", c).presentAccessoryCircular();
   if (i === 2) await build("accessoryCircular", c, "linee").presentAccessoryCircular();
-  if (i === 3) await build("accessoryInline", c).presentAccessoryInline();
+  if (i === 3) await build("accessoryRectangular", c, "percentuale").presentAccessoryRectangular();
+  if (i === 4) await build("accessoryRectangular", c, "linea").presentAccessoryRectangular();
+  if (i === 5) await build("accessoryInline", c).presentAccessoryInline();
 }
 Script.complete();
